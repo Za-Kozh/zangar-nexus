@@ -1,0 +1,32 @@
+
+{
+  "name": "nexus-app",
+  "productName": "Nexus Farmer",
+  "description": "Electron приложение для подключения к Nexus WebSocket",
+  "main": "main.js",
+  "version": "1.0.0",
+  "author": "za.kosh",
+  "scripts": {
+    "start": "electron .",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder"
+  },
+  "dependencies": {
+    "dotenv": "16.4.7",
+    "ethers": "^6.13.5",
+    "googleapis": "144.0.0",
+    "ws": "8.18.1"
+  },
+  "devDependencies": {
+    "electron": "34.3.0",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "xyz.nexus.app",
+    "productName": "Nexus Farmer",
+    "win": {
+      "target": ["nsis", "portable"],
+      "icon": "./UI/Cube White.png"
+    }
+  }
+}

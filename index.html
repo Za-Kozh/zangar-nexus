@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=648, height=1152, initial-scale=1.0">
+    <title>Nexus Farmer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            width: 400px;
+            height: 600px;
+            overflow: hidden;
+            background: url('./UI/Nexus App Background.gif') no-repeat center center;
+            background-size: cover;
+        }
+    </style>
+</head>
+<body class="bg-black text-white flex flex-col items-center justify-center h-screen text-center font-bold">
+    <div class="mb-6">
+        <div class="flex justify-center">
+            <img src="./UI/Cube White.png" alt="Cube White" class="w-16 h-16">
+        </div>
+        <h1 class="mt-2 text-xl italic font-semibold bg-black bg-opacity-40 px-2 py-1 rounded">NEXUS FARMER</h1>
+    </div>
+
+    <button id="login" class="w-48 h-48 border-4 border-white rounded-full flex items-center justify-center text-lg font-bold bg-black">
+        CONNECT
+    </button>
+
+    <!-- Динамический статус -->
+    <div class="mt-6 text-lg bg-black bg-opacity-40 px-2 py-1 rounded">
+        <p id="status">Status: ❌</p>
+    </div>
+
+    <!-- Динамическое количество токенов -->
+    <p class="mt-4 text-lg font-semibold bg-black bg-opacity-40 px-2 py-1 rounded">
+        Total of tokens: <span id="balance"></span>
+    </p>
+
+    <p class="mt-6 text-sm font-semibold">by za.kosh</p>
+    <script src="renderer.js"></script>
+</body>
+</html>
