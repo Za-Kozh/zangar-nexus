@@ -1,4 +1,3 @@
-
 {
   "name": "nexus-app",
   "productName": "Nexus Farmer",
@@ -25,7 +24,10 @@
     "appId": "xyz.nexus.app",
     "productName": "Nexus Farmer",
     "win": {
-      "target": ["nsis", "portable"],
+      "target": [
+        "nsis",
+        "portable"
+      ],
       "icon": "./UI/Cube White.png"
     }
   }
