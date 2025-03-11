@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Rewards Monitor</title>
+  <!-- Tailwind (если используете) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* Общие стили для фона и текста */
+    body {
+      margin: 0;               /* убираем стандартные отступы */
+      padding: 20px;           /* создаём внутренний отступ от краёв окна */
+      background-color: #1a202c;
+      color: #f7fafc;
+      font-family: sans-serif;
+      background-size: cover;
+    }
+    /* Оформление блока вывода */
+    #rewardOutput {
+      background-color: #000;  /* чёрный фон */
+      border-radius: 8px;      /* скруглённые углы */
+      padding: 1rem;           /* внутренний отступ */
+      width: 100%;             /* занимаем всю доступную ширину */
+      height: 100%;            /* занимаем всю доступную высоту */
+      max-height: 60vh;        /* ограничиваем высоту ~60% окна */
+      overflow-y: auto;        /* вертикальная прокрутка при большом объёме */
+      box-sizing: border-box;  /* учитываем padding в ширине/высоте */
+    }
+  </style>
+</head>
+<body>
+  <h1 class="text-2xl mb-4">Rewards Monitor</h1>
+  <!-- Блок для отображения данных CLI -->
+  <pre id="rewardOutput"></pre>
+
+  <script>
+    const { ipcRenderer } = require('electron');
+    ipcRenderer.on('reward-update', (event, data) => {
+      document.getElementById('rewardOutput').innerText = data;
+    });
+  </script>
+</body>
+</html>

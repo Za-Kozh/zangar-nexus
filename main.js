@@ -2,28 +2,31 @@ require('dotenv').config();
 const { app, BrowserWindow, ipcMain, shell, session } = require('electron');
 const { google } = require('googleapis');
 const { ethers } = require("ethers");
+const { exec } = require('child_process');
 const WebSocket = require('ws');
+const { error } = require('console');
 
 const WS_URL = 'wss://rpc.nexus.xyz/ws';
-const CLIENT_ID = ''; // CLIENT_ID from Google Console Cloud Oauth
-const CLIENT_SECRET = ''; // CLIENT_SECRET from Google Console Cloud Oauth
-const REDIRECT_URI = 'urn:ietf:wg:oauth:2.0:oob';
+const CLIENT_ID = '60646434375-hjuv1f61dsqqqeetaoqq6oc2klnh4eoq.apps.googleusercontent.com'; // CLIENT_ID from Google Console Cloud Oauth
+const CLIENT_SECRET = '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'; // CLIENT_SECRET from Google Console Cloud Oauth
+const REDIRECT_URI = 'http://localhost:3000/auth/callback';
 
 const oauth2Client = new google.auth.OAuth2(CLIENT_ID, CLIENT_SECRET, REDIRECT_URI);
 const provider = new ethers.JsonRpcProvider("https://rpc.nexus.xyz/http");
-const walletAddress = ""; // Nexus Wallet Address
+const walletAddress = "0xD39ad8a68D85cfD2E1Cd3fbA01B392D8b335eAe9"; // Nexus Wallet Address
 
 let socket;
 let mainWindow;
 let authWindow;
-// let tokenCount = 0;
-// let networkQuality = 75;
+let rewardsWindow;
 
+// Main Interface
 function createWindow() {
     mainWindow = new BrowserWindow({
         width: 400,
         height: 600,
         resizable: false,
+        title: 'Nexus Farmer',
         autoHideMenuBar: true,
         webPreferences: {
             nodeIntegration: true,
@@ -33,10 +36,40 @@ function createWindow() {
     mainWindow.loadFile('index.html');
 }
 
-// Открытие окна Google OAuth
+// Reward Window
+function createRewardsWindow() {
+    // Если окно уже создано, просто показываем его
+    if (rewardsWindow) {
+      rewardsWindow.show();
+      return;
+    }
+    rewardsWindow = new BrowserWindow({
+      width: 400,
+      height: 600,
+      resizable: false,
+      title: 'Rewards Monitor',
+      autoHideMenuBar: true,
+      webPreferences: {
+        nodeIntegration: true,
+        contextIsolation: false,
+      }
+    });
+    rewardsWindow.loadFile('rewards.html');
+    rewardsWindow.on('closed', () => {
+      rewardsWindow = null;
+    });
+  }
+
+ipcMain.on('openRewards', () => {
+    createRewardsWindow();
+});
+
+
+// Opening the Google OAuth window
 ipcMain.on('login', async () => {
     const authUrl = oauth2Client.generateAuthUrl({
         access_type: 'offline',
+        prompt: 'consent',
         scope: ['https://www.googleapis.com/auth/userinfo.email']
     });
     
@@ -50,7 +83,7 @@ ipcMain.on('login', async () => {
     });
     authWindow.loadURL(authUrl);
 
-    // Перехват кода авторизации
+    // Authorization code interception
     const filter = { urls: ['*://localhost/*'] };
     session.defaultSession.webRequest.onBeforeRequest(filter, async (details, callback) => {
         const url = new URL(details.url);
@@ -75,8 +108,7 @@ function connect(authToken) {
 
     socket.on('open', () => {
         console.log('Connected to Nexus WebSocket');
-        mainWindow.webContents.send('status', 'Connected');
-        keepAlive();
+        mainWindow.webContents.send('status', '✅');
     });
 
     socket.on('message', (data) => {
@@ -85,7 +117,7 @@ function connect(authToken) {
 
     socket.on('close', (code, reason) => {
         console.log(`Disconnected: ${code} - ${reason}`);
-        mainWindow.webContents.send('status', 'Disconnected');
+        mainWindow.webContents.send('status', '❌');
         reconnect(authToken);
     });
 
@@ -95,21 +127,23 @@ function connect(authToken) {
     });
 }
 
-function keepAlive() {
-    setInterval(() => {
-        if (socket.readyState === WebSocket.OPEN) {
-            socket.send(JSON.stringify({ "method": "ping" }));
-            console.log('Sent: ping');
-        }
-    }, 30000);
-}
-
 function reconnect(authToken) {
     console.log('Reconnecting in 5 seconds...');
     setTimeout(() => connect(authToken), 5000);
 }
 
-// Функция проверки баланса
+// Обработчик запроса обновления наград
+ipcMain.on('request-reward-update', (event) => {
+    exec('nexus-cli status', (error, stdout, stderr) => {
+      if (error) {
+        console.error('Ошибка CLI:', error);
+        return;
+      }
+      event.reply('reward-update', stdout);
+    });
+});
+
+// Balance check function
 async function checkBalance() {
     try {
         const balanceWei = await provider.getBalance(walletAddress);
@@ -121,7 +155,7 @@ async function checkBalance() {
     }
 }
 
-// Обработчик запроса баланса из Renderer процесса
+// Handler for balance request from Renderer process
 ipcMain.handle("get-balance", async () => {
     return await checkBalance();
 });
@@ -131,6 +165,18 @@ app.whenReady().then(() => {
     app.on('activate', () => {
         if (BrowserWindow.getAllWindows().length === 0) createWindow();
     });
+    setInterval(() => {
+        exec('npx nexus-cli status', (error, stdout, stderr) => {
+          if (error) {
+            console.error('Ошибка CLI:', error);
+            return;
+          }
+          // Если окно наград открыто, отправляем обновление
+          if (rewardsWindow) {
+            rewardsWindow.webContents.send('reward-update', stdout);
+          }
+        });
+      }, 10000);
 });
 
 app.on('window-all-closed', () => {
